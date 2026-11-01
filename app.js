@@ -25,7 +25,10 @@ const state = {
   sortOrder: 'desc',
   isPreviewMode: false,
   autoSaveTimer: null,
-  detailSidebarOpen: false
+  detailSidebarOpen: false,
+  // Resize state
+  sidebarWidth: null,
+  detailWidth: null
 };
 
 // ============================================================================
@@ -33,6 +36,182 @@ const state = {
 // ============================================================================
 
 const elements = {};
+
+// ============================================================================
+// Resize Handles
+// ============================================================================
+
+function setupResizeHandles() {
+  // Load saved widths from localStorage
+  const savedSidebarWidth = localStorage.getItem('sidebarWidth');
+  const savedDetailWidth = localStorage.getItem('detailWidth');
+
+  if (savedSidebarWidth) {
+    state.sidebarWidth = parseInt(savedSidebarWidth, 10);
+    document.documentElement.style.setProperty('--sidebar-width', `${state.sidebarWidth}px`);
+  }
+
+  if (savedDetailWidth) {
+    state.detailWidth = parseInt(savedDetailWidth, 10);
+    document.documentElement.style.setProperty('--detail-width', `${state.detailWidth}px`);
+  }
+
+  // Sidebar resize handle
+  const sidebarHandle = document.createElement('div');
+  sidebarHandle.className = 'resize-handle resize-handle-sidebar';
+  sidebarHandle.setAttribute('role', 'separator');
+  sidebarHandle.setAttribute('aria-label', 'Resize sidebar');
+  sidebarHandle.setAttribute('tabindex', '0');
+  document.getElementById('sidebar').appendChild(sidebarHandle);
+
+  // Detail sidebar resize handle
+  const detailHandle = document.createElement('div');
+  detailHandle.className = 'resize-handle resize-handle-detail';
+  detailHandle.setAttribute('role', 'separator');
+  detailHandle.setAttribute('aria-label', 'Resize detail panel');
+  detailHandle.setAttribute('tabindex', '0');
+  document.getElementById('detail-sidebar').appendChild(detailHandle);
+
+  let isResizing = false;
+  let startX = 0;
+  let startWidth = 0;
+  let currentHandle = null;
+
+  function startResize(e, handle, isSidebar) {
+    isResizing = true;
+    currentHandle = handle;
+    startX = e.clientX;
+    startWidth = isSidebar ? state.sidebarWidth || 280 : state.detailWidth || 360;
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    handle.classList.add('resizing');
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('keydown', onKeyDown);
+
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  function onMouseMove(e) {
+    if (!isResizing || !currentHandle) return;
+
+    const deltaX = e.clientX - startX;
+    const isSidebar = currentHandle.classList.contains('resize-handle-sidebar');
+
+    if (isSidebar) {
+      const newWidth = Math.max(200, Math.min(500, startWidth + deltaX));
+      state.sidebarWidth = newWidth;
+      document.documentElement.style.setProperty('--sidebar-width', `${newWidth}px`);
+    } else {
+      const newWidth = Math.max(250, Math.min(600, startWidth - deltaX));
+      state.detailWidth = newWidth;
+      document.documentElement.style.setProperty('--detail-width', `${newWidth}px`);
+    }
+  }
+
+  function onMouseUp() {
+    if (!isResizing) return;
+
+    isResizing = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+
+    if (currentHandle) {
+      currentHandle.classList.remove('resizing');
+    }
+
+    // Save to localStorage
+    if (state.sidebarWidth) {
+      localStorage.setItem('sidebarWidth', state.sidebarWidth.toString());
+    }
+    if (state.detailWidth) {
+      localStorage.setItem('detailWidth', state.detailWidth.toString());
+    }
+
+    currentHandle = null;
+
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    document.removeEventListener('keydown', onKeyDown);
+  }
+
+  function onKeyDown(e) {
+    if (e.key === 'Escape' && isResizing) {
+      onMouseUp();
+    }
+  }
+
+  // Mouse events
+  sidebarHandle.addEventListener('mousedown', (e) => startResize(e, sidebarHandle, true));
+  detailHandle.addEventListener('mousedown', (e) => startResize(e, detailHandle, false));
+
+  // Keyboard support for accessibility
+  sidebarHandle.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      // Start keyboard resize mode
+      sidebarHandle.classList.add('keyboard-resizing');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      const handleKeydown = (ke) => {
+        if (ke.key === 'ArrowRight') {
+          const newWidth = Math.min(500, (state.sidebarWidth || 280) + 10);
+          state.sidebarWidth = newWidth;
+          document.documentElement.style.setProperty('--sidebar-width', `${newWidth}px`);
+        } else if (ke.key === 'ArrowLeft') {
+          const newWidth = Math.max(200, (state.sidebarWidth || 280) - 10);
+          state.sidebarWidth = newWidth;
+          document.documentElement.style.setProperty('--sidebar-width', `${newWidth}px`);
+        } else if (ke.key === 'Enter' || ke.key === ' ' || ke.key === 'Escape') {
+          ke.preventDefault();
+          sidebarHandle.classList.remove('keyboard-resizing');
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+          if (state.sidebarWidth) {
+            localStorage.setItem('sidebarWidth', state.sidebarWidth.toString());
+          }
+          document.removeEventListener('keydown', handleKeydown);
+        }
+      };
+      document.addEventListener('keydown', handleKeydown);
+    }
+  });
+
+  detailHandle.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      detailHandle.classList.add('keyboard-resizing');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      const handleKeydown = (ke) => {
+        if (ke.key === 'ArrowLeft') {
+          const newWidth = Math.min(600, (state.detailWidth || 360) + 10);
+          state.detailWidth = newWidth;
+          document.documentElement.style.setProperty('--detail-width', `${newWidth}px`);
+        } else if (ke.key === 'ArrowRight') {
+          const newWidth = Math.max(250, (state.detailWidth || 360) - 10);
+          state.detailWidth = newWidth;
+          document.documentElement.style.setProperty('--detail-width', `${newWidth}px`);
+        } else if (ke.key === 'Enter' || ke.key === ' ' || ke.key === 'Escape') {
+          ke.preventDefault();
+          detailHandle.classList.remove('keyboard-resizing');
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+          if (state.detailWidth) {
+            localStorage.setItem('detailWidth', state.detailWidth.toString());
+          }
+          document.removeEventListener('keydown', handleKeydown);
+        }
+      };
+      document.addEventListener('keydown', handleKeydown);
+    }
+  });
+}
 
 // ============================================================================
 // Utility Functions
@@ -128,79 +307,79 @@ function showToast(message, type = 'info', duration = 3000) {
 // ============================================================================
 
 function showModal(title, bodyHtml, footerHtml = '') {
-  return new Promise((resolve) => {
-    const overlay = $('#modal-overlay');
-    const modal = overlay.querySelector('.modal');
+  const overlay = $('#modal-overlay');
+  const modal = overlay.querySelector('.modal');
 
-    $('#modal-title').textContent = title;
-    $('#modal-body').innerHTML = bodyHtml;
-    $('#modal-footer').innerHTML = footerHtml;
+  $('#modal-title').textContent = title;
+  $('#modal-body').innerHTML = bodyHtml;
+  $('#modal-footer').innerHTML = footerHtml;
 
-    overlay.hidden = false;
-    overlay.setAttribute('aria-hidden', 'false');
+  overlay.hidden = false;
+  overlay.setAttribute('aria-hidden', 'false');
 
-    const close = () => {
-      overlay.hidden = true;
-      overlay.setAttribute('aria-hidden', 'true');
-      resolve(null);
-    };
+  $('#modal-close').onclick = closeModal;
+  overlay.onclick = (e) => {
+    if (e.target === overlay) closeModal();
+  };
 
-    $('#modal-close').onclick = close;
-    overlay.onclick = (e) => {
-      if (e.target === overlay) close();
-    };
-
-    // Focus first focusable element
-    setTimeout(() => {
-      const focusable = modal.querySelector('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
-      if (focusable) focusable.focus();
-    }, 50);
-  });
+  // Focus first focusable element
+  setTimeout(() => {
+    const focusable = modal.querySelector('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (focusable) focusable.focus();
+  }, 50);
 }
 
 function confirmDialog(title, message) {
-  return showModal(title, `<p>${escapeHtml(message)}</p>`, `
-    <button class="btn btn-secondary" data-result="cancel">Cancel</button>
-    <button class="btn btn-danger" data-result="confirm">Confirm</button>
-  `).then(() => new Promise(resolve => {
+  return new Promise((resolve) => {
+    showModal(title, `<p>${escapeHtml(message)}</p>`, `
+      <button class="btn btn-secondary" data-result="cancel">Cancel</button>
+      <button class="btn btn-danger" data-result="confirm">Confirm</button>
+    `);
+
     const checkResult = () => {
-      const btn = $('#modal-footer button[data-result]');
-      if (btn) {
-        btn.onclick = () => {
-          resolve(btn.dataset.result === 'confirm');
-          $('#modal-overlay').hidden = true;
-          $('#modal-overlay').setAttribute('aria-hidden', 'true');
+      const confirmBtn = $('#modal-footer button[data-result="confirm"]');
+      const cancelBtn = $('#modal-footer button[data-result="cancel"]');
+      if (confirmBtn && cancelBtn) {
+        confirmBtn.onclick = () => {
+          resolve(true);
+          closeModal();
+        };
+        cancelBtn.onclick = () => {
+          resolve(false);
+          closeModal();
         };
       } else {
         setTimeout(checkResult, 50);
       }
     };
     checkResult();
-  }));
+  });
 }
 
 function promptDialog(title, label, defaultValue = '', type = 'text') {
-  return showModal(title, `
-    <div class="form-group">
-      <label>${escapeHtml(label)}</label>
-      <input type="${type}" id="prompt-input" value="${escapeHtml(defaultValue)}" autofocus>
-    </div>
-  `, `
-    <button class="btn btn-secondary" data-result="cancel">Cancel</button>
-    <button class="btn btn-primary" data-result="ok">OK</button>
-  `).then(() => new Promise(resolve => {
+  return new Promise((resolve) => {
+    showModal(title, `
+      <div class="form-group">
+        <label>${escapeHtml(label)}</label>
+        <input type="${type}" id="prompt-input" value="${escapeHtml(defaultValue)}" autofocus>
+      </div>
+    `, `
+      <button class="btn btn-secondary" data-result="cancel">Cancel</button>
+      <button class="btn btn-primary" data-result="ok">OK</button>
+    `);
+
     const input = $('#prompt-input');
     const checkResult = () => {
-      const btn = $('#modal-footer button[data-result]');
-      if (btn) {
-        btn.onclick = () => {
-          if (btn.dataset.result === 'ok') {
-            resolve(input.value);
-          } else {
-            resolve(null);
-          }
-          $('#modal-overlay').hidden = true;
-          $('#modal-overlay').setAttribute('aria-hidden', 'true');
+      const okBtn = $('#modal-footer button[data-result="ok"]');
+      const cancelBtn = $('#modal-footer button[data-result="cancel"]');
+      if (okBtn && cancelBtn) {
+        okBtn.onclick = () => {
+          resolve(input.value);
+          closeModal();
+        };
+        cancelBtn.onclick = () => {
+          resolve(null);
+          closeModal();
         };
       } else {
         setTimeout(checkResult, 50);
@@ -213,7 +392,13 @@ function promptDialog(title, label, defaultValue = '', type = 'text') {
         $('#modal-footer button[data-result="ok"]').click();
       }
     });
-  }));
+  });
+}
+
+function closeModal() {
+  const overlay = $('#modal-overlay');
+  overlay.hidden = true;
+  overlay.setAttribute('aria-hidden', 'true');
 }
 
 // ============================================================================
@@ -336,10 +521,16 @@ function showView(viewName) {
     $(`[data-folder-id="${state.currentFolderId}"]`)?.classList.add('active');
   }
 
-  // Close detail sidebar on mobile
-  if (window.innerWidth < 900) {
-    $('#detail-sidebar')?.classList.remove('open');
-  }
+  // Update tab buttons
+  $$('.tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === viewName);
+    btn.setAttribute('aria-selected', btn.dataset.view === viewName);
+  });
+
+  // Close detail sidebar
+  $('#detail-sidebar').hidden = true;
+  $('#detail-sidebar').classList.remove('open');
+  $('#app').classList.remove('has-detail');
 
   // Load view-specific data
   switch (viewName) {
@@ -901,13 +1092,6 @@ function showCliDetail(commandId) {
       </div>
       <p class="cli-detail-desc">${escapeHtml(cmd.description)}</p>
       <div class="cli-detail-code">
-        <button class="copy-btn" data-command="${escapeHtml(cmd.command)}" aria-label="Copy command">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-          Copy
-        </button>
         <pre><code>${escapeHtml(cmd.command)}</code></pre>
       </div>
       ${cmd.tags && cmd.tags.length > 0 ? `
@@ -916,13 +1100,20 @@ function showCliDetail(commandId) {
         </div>
       ` : ''}
       <div class="cli-detail-actions">
+        <button class="btn btn-secondary" data-action="copy" aria-label="Copy command">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          Copy
+        </button>
         <button class="btn btn-secondary" data-action="edit">Edit</button>
         <button class="btn btn-danger" data-action="delete">Delete</button>
       </div>
     </div>
   `;
 
-  content.querySelector('.copy-btn').onclick = async () => {
+  content.querySelector('[data-action="copy"]').onclick = async () => {
     await navigator.clipboard.writeText(cmd.command);
     showToast('Command copied!', 'success', 1500);
   };
@@ -942,6 +1133,7 @@ function showCliDetail(commandId) {
   };
 
   sidebar.hidden = false;
+  $('#app').classList.add('has-detail');
   if (window.innerWidth < 900) {
     sidebar.classList.add('open');
   }
@@ -980,42 +1172,43 @@ function showCliCommandModal(commandId = null) {
     <button class="btn btn-secondary" data-result="cancel">Cancel</button>
     <button class="btn btn-primary" data-result="save">Save</button>
     `
-  ).then(() => {
-    const checkResult = () => {
-      const saveBtn = $('#modal-footer button[data-result="save"]');
-      if (saveBtn) {
-        saveBtn.onclick = async () => {
-          const name = $('#cli-name').value.trim();
-          const category = $('#cli-category').value;
-          const description = $('#cli-desc').value.trim();
-          const command = $('#cli-command').value.trim();
-          const tags = $('#cli-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+  );
 
-          if (!name || !command) {
-            showToast('Name and command are required', 'error');
-            return;
-          }
+  const checkResult = () => {
+    const saveBtn = $('#modal-footer button[data-result="save"]');
+    const cancelBtn = $('#modal-footer button[data-result="cancel"]');
+    if (saveBtn && cancelBtn) {
+      saveBtn.onclick = async () => {
+        const name = $('#cli-name').value.trim();
+        const category = $('#cli-category').value;
+        const description = $('#cli-desc').value.trim();
+        const command = $('#cli-command').value.trim();
+        const tags = $('#cli-tags').value.split(',').map(t => t.trim()).filter(Boolean);
 
-          if (isEdit) {
-            await storage.updateCliCommand(commandId, { name, category, description, command, tags });
-            showToast('Command updated', 'success');
-          } else {
-            await storage.createCliCommand({ name, category, description, command, tags });
-            showToast('Command added', 'success');
-          }
+        if (!name || !command) {
+          showToast('Name and command are required', 'error');
+          return;
+        }
 
-          $('#modal-overlay').hidden = true;
-          $('#modal-overlay').setAttribute('aria-hidden', 'true');
-          await loadData();
-        };
-      } else {
-        setTimeout(checkResult, 50);
-      }
-    };
-    checkResult();
+        if (isEdit) {
+          await storage.updateCliCommand(commandId, { name, category, description, command, tags });
+          showToast('Command updated', 'success');
+        } else {
+          await storage.createCliCommand({ name, category, description, command, tags });
+          showToast('Command added', 'success');
+        }
 
-    $('#cli-category').value = cmd.category || 'custom';
-  });
+        closeModal();
+        await loadData();
+      };
+      cancelBtn.onclick = () => closeModal();
+    } else {
+      setTimeout(checkResult, 50);
+    }
+  };
+  checkResult();
+
+  $('#cli-category').value = cmd.category || 'custom';
 }
 
 // ============================================================================
@@ -1047,11 +1240,11 @@ async function loadSettings() {
 }
 
 function getDefaultDocumentsPath() {
-  // Try to get Documents folder
+  // Return a display-friendly default path (actual path requires File System Access API)
   if (navigator.userAgentData?.platform === 'Windows') {
-    return `${process.env?.USERPROFILE || ''}\\Documents\\ScratchNotes`;
+    return 'Documents\\ScratchNotes';
   }
-  return `${process.env?.HOME || ''}/Documents/ScratchNotes`;
+  return 'Documents/ScratchNotes';
 }
 
 function applyTheme(theme) {
@@ -1151,9 +1344,15 @@ function setupEventListeners() {
 
   $('#new-note-btn').onclick = () => showEditor();
   $('#empty-new-note').onclick = () => showEditor();
-  $('#empty-new-folder')?.onclick = () => $('#new-folder-btn').click();
+  const emptyNewFolder = $('#empty-new-folder');
+  if (emptyNewFolder) emptyNewFolder.onclick = () => $('#new-folder-btn').click();
 
   $('#back-btn').onclick = () => showView('notes');
+
+  // Tab navigation
+  $$('.tab-btn').forEach(btn => {
+    btn.onclick = () => showView(btn.dataset.view);
+  });
 
   // Search
   $('#folder-search').addEventListener('input', debounce((e) => {
@@ -1202,13 +1401,24 @@ function setupEventListeners() {
   });
 
   $('#save-note-btn').onclick = async () => {
-    if (state.currentNoteId) {
-      await storage.updateNote(state.currentNoteId, {
-        title: $('#note-title').value,
-        content: $('#note-content').value
-      });
-      showToast('Saved', 'success');
+    const title = $('#note-title').value.trim();
+    const content = $('#note-content').value;
+    const folderId = $('#note-folder').value;
+
+    if (!title) {
+      showToast('Note title is required', 'error');
+      return;
     }
+
+    if (state.currentNoteId) {
+      await storage.updateNote(state.currentNoteId, { title, content, folderId });
+      showToast('Saved', 'success');
+    } else {
+      const newNote = await storage.createNote(folderId, title, content);
+      state.currentNoteId = newNote.id;
+      showToast('Note created', 'success');
+    }
+    await loadData();
   };
 
   $('#delete-note-btn').onclick = async () => {
@@ -1219,7 +1429,7 @@ function setupEventListeners() {
       showView('notes');
       showToast('Note deleted', 'success');
     }
-  });
+  };
 
   // Editor toolbar
   $$('.editor-toolbar [data-format]').forEach(btn => {
@@ -1234,7 +1444,7 @@ function setupEventListeners() {
       switch (e.key.toLowerCase()) {
         case 's':
           e.preventDefault();
-          if (state.currentView === 'editor' && state.currentNoteId) {
+          if (state.currentView === 'editor') {
             $('#save-note-btn').click();
           }
           break;
@@ -1294,9 +1504,27 @@ function setupEventListeners() {
     showToast('Backup saved', 'success');
   };
 
-  $('#open-documents-btn').onclick = () => {
-    // This would need a native integration or just show the path
-    showToast('Open folder manually: ' + $('#documents-path').value, 'info', 5000);
+  $('#open-documents-btn').onclick = async () => {
+    try {
+      if ('showDirectoryPicker' in window) {
+        const dirHandle = await window.showDirectoryPicker({
+          mode: 'readwrite',
+          startIn: 'documents'
+        });
+        const path = dirHandle.name;
+        $('#documents-path').value = path;
+        await storage.setSetting('documentsPath', path);
+        showToast('Documents folder selected', 'success');
+      } else {
+        // Fallback for browsers without File System Access API
+        showToast('Folder picker not supported in this browser. Enter path manually.', 'warning', 5000);
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Folder picker error:', error);
+        showToast('Failed to open folder picker', 'error');
+      }
+    }
   };
 
   $('#export-all-btn').onclick = async () => {
@@ -1385,6 +1613,7 @@ async function init() {
   });
 
   setupEventListeners();
+  setupResizeHandles();
 
   // Load data
   await loadData();

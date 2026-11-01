@@ -58,8 +58,36 @@
 
     <!-- Main Content Area -->
     <main class="main" role="main">
+      <!-- Tab Navigation -->
+      <nav class="tab-nav" id="tab-nav" aria-label="Main navigation" role="tablist">
+        <button class="tab-btn active" id="tab-notes" role="tab" aria-selected="true" aria-controls="notes-view" data-view="notes">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></polyline>
+            <line x1="16" y1="17" x2="8" y2="17"></polyline>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>Notes</span>
+        </button>
+        <button class="tab-btn" id="tab-cli" role="tab" aria-selected="false" aria-controls="cli-view" data-view="cli">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="2" width="6" height="20" rx="1"></rect>
+            <path d="M4 10h16M4 14h16"></path>
+          </svg>
+          <span>CLI</span>
+        </button>
+        <button class="tab-btn" id="tab-settings" role="tab" aria-selected="false" aria-controls="settings-view" data-view="settings">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 21.72a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.69 3.28a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+
       <!-- Notes View (default) -->
-      <section class="view" id="notes-view" aria-label="Notes">
+      <section class="view" id="notes-view" aria-label="Notes" role="tabpanel">
         <header class="view-header">
           <div class="breadcrumb" id="breadcrumb" aria-label="Current location">
             <span class="breadcrumb-item" data-folder-id="root">All Notes</span>
@@ -316,7 +344,7 @@
         <div class="cli-categories" id="cli-categories" role="list">
           <!-- CLI commands rendered here -->
         </div>
-        <div class="empty-state" id="cli-empty" hidden>
+        <div class="empty-state cli-empty-state" id="cli-empty" hidden>
           <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="9" y="2" width="6" height="20" rx="1"></rect>
             <path d="M4 10h16M4 14h16"></path>

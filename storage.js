@@ -111,7 +111,7 @@ class Storage {
       const transaction = this.db.transaction(storeName, 'readwrite');
       const store = transaction.objectStore(storeName);
       const request = store.put(value);
-      request.onsuccess = () => resolve(request.result);
+      transaction.oncomplete = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
   }
@@ -122,7 +122,7 @@ class Storage {
       const transaction = this.db.transaction(storeName, 'readwrite');
       const store = transaction.objectStore(storeName);
       const request = store.delete(key);
-      request.onsuccess = () => resolve();
+      transaction.oncomplete = () => resolve();
       request.onerror = () => reject(request.error);
     });
   }
@@ -133,7 +133,7 @@ class Storage {
       const transaction = this.db.transaction(storeName, 'readwrite');
       const store = transaction.objectStore(storeName);
       const request = store.clear();
-      request.onsuccess = () => resolve();
+      transaction.oncomplete = () => resolve();
       request.onerror = () => reject(request.error);
     });
   }

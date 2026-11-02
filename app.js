@@ -796,6 +796,7 @@ function renderNotes() {
   if (notes.length === 0) {
     grid.hidden = true;
     emptyState.hidden = false;
+    grid.innerHTML = ''; // BUGFIX ATTEMPT: ISSUE-002 - clear stale note cards from DOM
     updateBreadcrumb();
     return;
   }

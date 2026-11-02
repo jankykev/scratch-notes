@@ -15,7 +15,7 @@ A lightweight, offline-first note-taking and CLI command manager built with vani
 
 ## What's New
 
-### v1.0.0 (Current Release)
+### 0.0.1-alpha (Current Release)
 
 #### Major Fixes
 - **All Notes counter** now accurately reflects total notes across all folders (was showing 3 instead of 0 on fresh load)

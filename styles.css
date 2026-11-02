@@ -141,6 +141,13 @@
   padding: 0;
 }
 
+/* Ensure hidden attribute works - browser default [hidden] { display: none }
+   has same specificity as class selectors, so author CSS wins.
+   This rule ensures hidden elements are actually hidden. */
+[hidden] {
+  display: none !important;
+}
+
 html {
   font-size: var(--font-size-base);
   -webkit-font-smoothing: antialiased;

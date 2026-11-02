@@ -104,8 +104,9 @@ node --check cli-commands.js
 2. **Label bugfix attempts** - Add code comments: `// BUGFIX ATTEMPT: [issue description]`
 3. **Update NOTES.md** - Document what was attempted, even if not verified
 4. **Nothing is fixed until user tests** - User must specifically notify success
-5. **Don't guess or hallucinate** - Read the code, trace the logic, verify the fix
-6. **Commit each change** - Use `wip:` prefix for in-progress work; after user confirms fix works, commit with official message (no `wip:` prefix)
+5. **Verification distinction** - "Automated tests pass" = my verification; "User tested and confirmed" = user verification (ONLY this counts for guideline #4). Never claim "user verified" unless human explicitly says "this works" or "verified".
+6. **Don't guess or hallucinate** - Read the code, trace the logic, verify the fix
+7. **Commit messages reflect reality** - Use "tests pass" or "verified via automated tests" NOT "user verified" unless human explicitly confirmed. After user confirms fix works, commit with official prefix (`fix:`, `ui:`, `data:`); in-progress work uses `wip:` prefix.
 
 ## UI Conventions
 - **Tab navigation**: Alt+1 (Notes), Alt+2 (CLI), Alt+3 (Settings)
@@ -143,6 +144,11 @@ After any fix, verify:
 - **UI tweaks (verified)**: After user confirms - commit as `ui: [description]` (no `wip:` prefix)
 - **Data changes**: Modify `cli-commands.js` - commit as `wip: data [description]`
 - **Never commit**: `node_modules/`, `package-lock.json`, build output, `AGENTS.md`, `CLAUDE.md`
+
+## Commit Message Verification Tags (REQUIRED)
+- `verified via automated tests` - Agent's Playwright/unit tests pass
+- `user verified` - Human explicitly confirmed "this works" or "verified" (ONLY this enables `fix:`/`ui:`/`data:` prefix per guideline #4)
+- Never use "user verified" based on agent tests alone
 
 ## Debugging Tips
 - Check browser console for IndexedDB errors

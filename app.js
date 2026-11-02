@@ -856,7 +856,8 @@ function renderNotes() {
       const noteId = btn.closest('.note-card').dataset.noteId;
       const note = state.notes.find(n => n.id === noteId);
       if (note) {
-        const newNote = await storage.createNote(note.folderId, `${note.title} (Copy)`, note.content);
+        // BUGFIX ATTEMPT: ISSUE-001 - Use "Copy of " prefix per acceptance criteria
+        const newNote = await storage.createNote(note.folderId, `Copy of ${note.title}`, note.content);
         await loadData();
         showEditor(newNote.id);
         showToast('Note duplicated', 'success');

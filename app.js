@@ -671,6 +671,15 @@ function countNotesInFolder(folderId, folders) {
   return count;
 }
 
+function getNotesInFolder(folderId, folders) {
+  let notes = state.notes.filter(n => n.folderId === folderId);
+  const children = getFolderChildren(folders, folderId);
+  for (const child of children) {
+    notes = notes.concat(getNotesInFolder(child.id, folders));
+  }
+  return notes;
+}
+
 function updateFolderTree() {
   const tree = $('#folder-tree');
   tree.innerHTML = `
@@ -779,7 +788,9 @@ function renderNotes() {
   const grid = $('#notes-grid');
   const emptyState = $('#empty-state');
 
-  let notes = state.notes.filter(n => n.folderId === state.currentFolderId);
+  let notes = state.currentFolderId === 'root'
+    ? [...state.notes] // All Notes: show all notes
+    : getNotesInFolder(state.currentFolderId, state.folders);
 
   // Apply search
   if (state.searchQuery) {

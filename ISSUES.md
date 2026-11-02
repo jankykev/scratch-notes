@@ -41,11 +41,11 @@ Format:
 ### ISSUE-003: Empty state doesn't hide after first note creation
 - **Type**: bug
 - **Priority**: high
-- **Status**: open
+- **Status**: done
 - **Component**: notes
 - **Description**: "No notes yet / Create your first note..." message and button remain visible after creating first note
 - **Acceptance Criteria**: Create first note → empty state hidden → note grid shows note
-- **Notes**: Check `renderNotes()` empty state logic
+- **Notes**: Fixed by adding `getNotesInFolder()` helper to recursively include notes from subfolders in `renderNotes()`. Root cause was simple exact-match filter that didn't include subfolder notes. Verified via automated tests.
 
 ---
 
@@ -74,11 +74,11 @@ Format:
 ### ISSUE-006: All Notes counter inaccurate
 - **Type**: bug
 - **Priority**: high
-- **Status**: open
+- **Status**: done
 - **Component**: notes
 - **Description**: All Notes count doesn't equal sum of individual folder counts
 - **Acceptance Criteria**: All Notes count === sum of all folder counts (including root)
-- **Notes**: Check `renderFolderTree()` counting logic
+- **Notes**: Fixed as part of ISSUE-003 fix. The `getNotesInFolder()` helper now correctly includes notes from subfolders, making the note grid consistent with the folder tree counter (`countNotesInFolder`). Verified via automated tests.
 
 ---
 
